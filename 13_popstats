@@ -1,0 +1,812 @@
+
+if (!require("adegenet", quietly = TRUE))
+  install.packages("adegenet")
+library(adegenet)
+
+if (!require("poppr", quietly = TRUE))
+  install.packages("poppr")
+library(poppr)
+
+if (!require("hierfstat", quietly = TRUE))
+  install.packages("hierfstat")
+ library(hierfstat)
+
+if (!require("StAMPP", quietly = TRUE))
+  install.packages("StAMPP")
+library(StAMPP)
+
+BiocManager::install("SNPRelate") #doesn't work normal way
+library(SNPRelate)
+
+if (!require("gdsfmt", quietly = TRUE))
+  install.packages("gdsfmt")
+library(gdsfmt)
+
+if (!require("dartR", quietly = TRUE))
+  install.packages("dartR")
+library(dartR)
+
+if (!require("dunn.test", quietly = TRUE))
+  install.packages("dunn.test")
+library(dunn.test)
+
+#FULL
+view(populations.structure)
+basic.stats.data <-basic.stats(populations.structure,diploid=TRUE,digits=4)
+
+#DIVERSITY (hierfstat) 
+# calculate standard error
+std <- function(x) sd(x)/sqrt(length(x))
+
+is.genind(populations.structure)
+#TRUE
+
+#FULL 
+basic.stats.data <-basic.stats(populations.structure,diploid=TRUE,digits=4)
+basic.stats.data
+
+#mean gene diversities within population Hs
+Hs(populations.structure)
+
+#Estimates mean observed heterozygosities
+Ho(populations.structure)
+
+Ho<-basic.stats.data[["Ho"]]
+View(Ho)
+
+Ho_SW<-Ho[,3,drop=FALSE]
+Ho_BU<-Ho[,2,drop=FALSE]
+Ho_KA<-Ho[,1,drop=FALSE]
+Ho_KO<-Ho[,4,drop=FALSE]
+Ho_NA<-Ho[,5,drop=FALSE]
+
+std(Ho_SW) 
+std(Ho_BU) 
+std(Ho_KA) 
+std(Ho_KO) 
+std(Ho_NA)
+
+Ho_SW_BU<-Ho[,c(3,2),drop=FALSE] 
+Ho_SW_KA<-Ho[,c(3,1),drop=FALSE]
+Ho_SW_KO<-Ho[,c(3,4),drop=FALSE] 
+Ho_SW_NA<-Ho[,c(3,5),drop=FALSE]
+Ho_BU_KA<-Ho[,c(2,1),drop=FALSE]
+Ho_BU_KO<-Ho[,c(2,4),drop=FALSE]
+Ho_BU_SW<-Ho[,c(2,3),drop=FALSE]
+Ho_KA_KO<-Ho[,c(1,4),drop=FALSE]
+Ho_KA_NA<-Ho[,c(1,5),drop=FALSE]
+Ho_KO_NA<-Ho[,c(4,5),drop=FALSE]
+
+std(Ho_SW_BU) 
+std(Ho_SW_KA) 
+std(Ho_SW_KO) 
+std(Ho_SW_NA) 
+std(Ho_BU_KA) 
+std(Ho_BU_KO) 
+std(Ho_BU_SW) 
+std(Ho_KA_KO) 
+std(Ho_KA_NA) 
+std(Ho_KO_NA) 
+
+#Testing normality (Shapiro-Wilk normality test)
+hist(Ho_SW, main="Histogram of Ho_SW", xlab="Value", ylab="Frequency")
+qqnorm(Ho_SW)
+qqline(Ho_SW, col = "red")
+shapiro.test(Ho_SW) 
+shapiro.test(Ho_BU) 
+shapiro.test(Ho_KA) 
+shapiro.test(Ho_KO) 
+shapiro.test(Ho_NA) 
+
+#Convert from wide to long format
+Ho_df <- as.data.frame(Ho)
+
+Ho_long <- Ho_df %>%
+  pivot_longer(cols = everything(), # Select all columns
+               names_to = "population", # Name of the new 'population' column
+               values_to = "Ho") # Name of the new 'Ho' column
+#View the reshaped data
+View(Ho_long)
+
+#Kruskal test
+kruskal.test(Ho ~ factor(population), data = Ho_long)
+
+#Perform Dunn's test
+dunn_results_Ho <- dunn.test(Ho_long$Ho, Ho_long$population, method = "bh")  # 'bh' for Benjamini-Hochberg adjustment
+  
+#Create a data frame from the results
+  dunn_results_Ho_df <- data.frame(
+    Comparison = dunn_results_Ho$comparisons,  # Pairwise comparisons
+    Z = dunn_results_Ho$Z,                     # Z-statistics
+    P.adjusted = dunn_results_Ho$P.adjusted    # Adjusted p-values
+  )
+
+#Print the data frame
+print(dunn_results_Ho)
+
+mean(Ho_SW) #correct 
+#0.1518278
+
+Hs<-basic.stats.data[["Hs"]]
+
+Hs_SW<-Hs[,3,drop=FALSE]
+Hs_BU<-Hs[,2,drop=FALSE]
+Hs_KA<-Hs[,1,drop=FALSE]
+Hs_KO<-Hs[,4,drop=FALSE]
+Hs_NA<-Hs[,5,drop=FALSE]
+
+std(Hs_SW) 
+std(Hs_BU)
+std(Hs_KA) 
+std(Hs_KO) 
+std(Hs_NA)
+
+Hs_SW_BU<-Hs[,c(3,2),drop=FALSE] 
+Hs_SW_KA<-Hs[,c(3,1),drop=FALSE]
+Hs_SW_KO<-Hs[,c(3,4),drop=FALSE] 
+Hs_SW_NA<-Hs[,c(3,5),drop=FALSE]
+Hs_BU_KA<-Hs[,c(2,1),drop=FALSE]
+Hs_BU_KO<-Hs[,c(2,4),drop=FALSE]
+Hs_BU_SW<-Hs[,c(2,3),drop=FALSE]
+Hs_KA_KO<-Hs[,c(1,4),drop=FALSE]
+Hs_KA_NA<-Hs[,c(1,5),drop=FALSE]
+Hs_KO_NA<-Hs[,c(4,5),drop=FALSE]
+
+std(Hs_SW_BU)
+std(Hs_SW_KA)
+std(Hs_SW_KO) 
+std(Hs_SW_NA)
+std(Hs_BU_KA) 
+std(Hs_BU_KO) 
+std(Hs_BU_SW)
+std(Hs_KA_KO) 
+std(Hs_KA_NA) 
+std(Hs_KO_NA)
+
+#Testing normality (Shapiro-Wilk normality test)
+shapiro.test(Hs_SW) 
+shapiro.test(Hs_BU) 
+shapiro.test(Hs_KA)
+shapiro.test(Hs_KO) 
+shapiro.test(Hs_NA) 
+
+#Convert from wide to long format
+Hs_df <- as.data.frame(Hs)
+
+Hs_long <- Hs_df %>%
+  pivot_longer(cols = everything(), # Select all columns
+               names_to = "population", # Name of the new 'population' column
+               values_to = "Hs") # Name of the new 'Hs' column
+
+#View the reshaped data
+View(Hs_long)
+
+#Kruskal test
+kruskal.test(Hs ~ factor(population), data = Hs_long)
+
+#PostHoc test for Kruskal-Wallis (Dunn's test)
+#Dunn's test
+dunn_results_Hs <- dunn.test(Hs_long$Hs, Hs_long$population, method = "bh")  # 'bh' for Benjamini-Hochberg adjustment
+
+#Create a data frame from the results
+dunn_results_Hs_df <- data.frame(
+  Comparison = dunn_results_Hs$comparisons,  # Pairwise comparisons
+  Z = dunn_results_Hs$Z,                     # Z-statistics
+  P.adjusted = dunn_results_Hs$P.adjusted    # Adjusted p-values
+)
+
+# Print the data frame
+print(dunn_results_Hs_df)
+
+#Inbreeding Coeficcient 
+Fis<-basic.stats.data[["Fis"]]
+View(Fis)
+
+Fis_SW<-Fis[,3,drop=FALSE]
+Fis_BU<-Fis[,2,drop=FALSE]
+Fis_KA<-Fis[,1,drop=FALSE]
+Fis_KO<-Fis[,4,drop=FALSE]
+Fis_NA<-Fis[,5,drop=FALSE]
+
+shapiro.test(Fis_SW)
+shapiro.test(Fis_BU) 
+shapiro.test(Fis_KA) 
+shapiro.test(Fis_KO) 
+shapiro.test(Fis_NA) 
+
+wilcox.test(Fis_SW, Fis_BU) 
+wilcox.test(Fis_SW, Fis_KA) 
+wilcox.test(Fis_SW, Fis_KO) 
+wilcox.test(Fis_SW, Fis_NA) 
+wilcox.test(Fis_BU, Fis_KA) 
+wilcox.test(Fis_BU, Fis_KO) 
+wilcox.test(Fis_BU, Fis_NA) 
+wilcox.test(Fis_KA, Fis_KO) 
+wilcox.test(Fis_KA, Fis_NA) 
+wilcox.test(Fis_KO, Fis_NA) 
+
+boot.ppfis(populations.structure)
+View(populations.structure)
+
+populations.structure_SW<-
+  popsub(
+    populations.structure,
+    sublist = "SW",
+    exclude = "NULL",
+    blacklist = NULL,
+    mat = NULL,
+    drop = TRUE
+  )
+
+populations.structure_BU<-
+  popsub(
+    populations.structure,
+    sublist = "BU",
+    exclude = "NULL",
+    blacklist = NULL,
+    mat = NULL,
+    drop = TRUE
+  )
+
+populations.structure_KA<-
+  popsub(
+    populations.structure,
+    sublist = "KA",
+    exclude = "NULL",
+    blacklist = NULL,
+    mat = NULL,
+    drop = TRUE
+  )
+
+populations.structure_KO<-
+  popsub(
+    populations.structure,
+    sublist = "KO",
+    exclude = "NULL",
+    blacklist = NULL,
+    mat = NULL,
+    drop = TRUE
+  )
+
+populations.structure_NA<-
+  popsub(
+    populations.structure,
+    sublist = "NA",
+    exclude = "NULL",
+    blacklist = NULL,
+    mat = NULL,
+    drop = TRUE
+  )
+
+View(populations.structure_SW)
+View(populations.structure)
+
+?boot.ppfis #DIff from above I think b/c nboot=100
+boot.ppfis(dat=populations.structure_SW,nboot=100,quant=c(0.025,0.975),diploid=TRUE,dig=4)
+
+#SE = (upper limit – lower limit) / 3.92
+SE_SW<-(0.5081-0.4679)/3.92
+SE_SW 
+
+CI_SW<-(0.5081-0.4679)/2
+CI_SW 
+
+boot.ppfis(dat=populations.structure_BU,nboot=100,quant=c(0.025,0.975),diploid=TRUE,dig=4)
+
+SE_BU<-(0.4884-0.4535)/3.92
+SE_BU
+
+CI_BU<-(0.4884-0.4535)/2
+CI_BU 
+
+boot.ppfis(dat=populations.structure_KA,nboot=100,quant=c(0.025,0.975),diploid=TRUE,dig=4)
+
+SE_KA<-(0.2779-0.2446)/3.92
+SE_KA
+
+CI_KA<-(0.2779-0.2446)/2
+CI_KA
+
+boot.ppfis(dat=populations.structure_KO,nboot=100,quant=c(0.025,0.975),diploid=TRUE,dig=4)
+
+SE_KO<-(0.3756-0.3369)/3.92
+SE_KO
+
+CI_KO<-(0.3756-0.3369)/2
+CI_KO
+
+boot.ppfis(dat=populations.structure_NA,nboot=100,quant=c(0.025,0.975),diploid=TRUE,dig=4)
+$fis.ci
+
+SE_NA<-(0.5373-0.4907)/3.92
+SE_NA
+
+CI_NA<-(0.5373-0.4907)/2
+CI_NA
+
+boot.ppfis(populations.structure_SW)
+
+boot.ppfis(populations.structure_BU)
+
+boot.ppfis(populations.structure_KA)
+
+boot.ppfis(populations.structure_KO)
+
+boot.ppfis(populations.structure_NA)
+
+basic.stats_SW <-basic.stats(populations.structure_SW,diploid=TRUE,digits=5)
+basic.stats_SW
+$overall
+FIS_SW<-0.48528
+
+basic.stats_BU <-basic.stats(populations.structure_BU,diploid=TRUE,digits=5)
+basic.stats_BU
+FIS_BU<-0.47091
+
+basic.stats_KA <-basic.stats(populations.structure_KA,diploid=TRUE,digits=5)
+basic.stats_KA
+FIS_KA<-0.26224
+
+basic.stats_KO <-basic.stats(populations.structure_KO,diploid=TRUE,digits=5)
+basic.stats_KO
+FIS_KO<-0.35565
+
+basic.stats_NA <-basic.stats(populations.structure_NA,diploid=TRUE,digits=5)
+basic.stats_NA
+FIS_NA<-0.51411
+
+#FST 
+Fst_SW<-Fst[,3,drop=FALSE]
+Fst_BU<-Fst[,2,drop=FALSE]
+Fst_KA<-Fst[,1,drop=FALSE]
+Fst_KO<-Fst[,4,drop=FALSE]
+Fst_NA<-Fst[,5,drop=FALSE]
+
+#NEUTRAL
+TajimaD.dosage(dos.data_SW)
+
+std_SW<-std(dos.data_SW)
+std_SW
+
+
+TajimaD.dosage(dos.data_BU)
+
+std_BU<-std(dos.data_BU)
+std_BU
+
+
+TajimaD.dosage(dos.data_KA)
+
+std_KA<-std(dos.data_KA)
+std_KA
+
+
+TajimaD.dosage(dos.data_KO)
+
+std_KO<-std(dos.data_KO)
+std_KO
+
+
+TajimaD.dosage(dos.data_NA)
+
+std_NA<-std(dos.data_NA)
+std_NA
+
+#Neutral
+basic.stats.data.neutral <-basic.stats(neutral.structure,diploid=TRUE,digits=4)
+basic.stats.data.neutral
+
+#Estimates mean observed heterozygosities
+Ho(neutral.structure)
+
+Ho.neutral<-basic.stats.data.neutral[["Ho"]]
+
+Ho_SW.neutral<-Ho.neutral[,3,drop=FALSE]
+Ho_BU.neutral<-Ho.neutral[,2,drop=FALSE]
+Ho_KA.neutral<-Ho.neutral[,1,drop=FALSE]
+Ho_KO.neutral<-Ho.neutral[,4,drop=FALSE]
+Ho_NA.neutral<-Ho.neutral[,5,drop=FALSE]
+
+std(Ho_SW.neutral) 
+std(Ho_BU.neutral) 
+std(Ho_KA.neutral)
+std(Ho_KO.neutral) 
+std(Ho_NA.neutral) 
+
+#mean gene diversities within population Hs
+Hs(neutral.structure)
+
+Hs.neutral<-basic.stats.data.neutral[["Hs"]]
+
+Hs_SW.neutral<-Hs.neutral[,3,drop=FALSE]
+Hs_BU.neutral<-Hs.neutral[,2,drop=FALSE]
+Hs_KA.neutral<-Hs.neutral[,1,drop=FALSE]
+Hs_KO.neutral<-Hs.neutral[,4,drop=FALSE]
+Hs_NA.neutral<-Hs.neutral[,5,drop=FALSE]
+
+std(Hs_SW.neutral)
+
+std(Hs_BU.neutral)
+
+std(Hs_KA.neutral)
+
+std(Hs_KO.neutral)
+
+std(Hs_NA.neutral)
+
+Fis.neutral<-basic.stats.data.neutral[["Fis"]]
+
+Fis_SW.neutral<-Fis.neutral[,3,drop=FALSE]
+Fis_BU.neutral<-Fis.neutral[,2,drop=FALSE]
+Fis_KA.neutral<-Fis.neutral[,1,drop=FALSE]
+Fis_KO.neutral<-Fis.neutral[,4,drop=FALSE]
+Fis_NA.neutral<-Fis.neutral[,5,drop=FALSE]
+
+neutral.structure_SW<-
+  popsub(
+    neutral.structure,
+    sublist = "SW",
+    exclude = "NULL",
+    blacklist = NULL,
+    mat = NULL,
+    drop = TRUE
+  )
+
+neutral.structure_BU<-
+  popsub(
+    neutral.structure,
+    sublist = "BU",
+    exclude = "NULL",
+    blacklist = NULL,
+    mat = NULL,
+    drop = TRUE
+  )
+
+neutral.structure_KA<-
+  popsub(
+    neutral.structure,
+    sublist = "KA",
+    exclude = "NULL",
+    blacklist = NULL,
+    mat = NULL,
+    drop = TRUE
+  )
+
+neutral.structure_KO<-
+  popsub(
+    neutral.structure,
+    sublist = "KO",
+    exclude = "NULL",
+    blacklist = NULL,
+    mat = NULL,
+    drop = TRUE
+  )
+
+neutral.structure_NA<-
+  popsub(
+    neutral.structure,
+    sublist = "NA",
+    exclude = "NULL",
+    blacklist = NULL,
+    mat = NULL,
+    drop = TRUE
+  )
+
+
+boot.ppfis(neutral.structure_SW)
+
+#SE = (upper limit – lower limit) / 3.92
+SE_SW.neutral<-(0.4974-0.4647)/3.92
+SE_SW.neutral 
+
+boot.ppfis(neutral.structure_BU)
+
+SE_BU.neutral<-(0.484-0.4572)/3.92
+SE_BU 
+
+boot.ppfis(neutral.structure_KA)
+
+SE_KA.neutral<-(0.2786-0.2441)/3.92
+SE_KA.neutral 
+
+boot.ppfis(neutral.structure_KO)
+
+SE_KO.neutral<-(0.3734-0.3383)/3.92
+SE_KO.neutral
+
+boot.ppfis(neutral.structure_NA)
+
+SE_NA.neutral<-(0.5387-0.4952)/3.92
+SE_NA.neutral 
+
+basic.stats_SW.neutral <-basic.stats(neutral.structure_SW,diploid=TRUE,digits=5)
+basic.stats_SW.neutral
+
+basic.stats_BU.neutral <-basic.stats(neutral.structure_BU,diploid=TRUE,digits=5)
+basic.stats_BU.neutral
+
+basic.stats_KA.neutral <-basic.stats(neutral.structure_KA,diploid=TRUE,digits=5)
+basic.stats_KA.neutral
+
+basic.stats_KO.neutral <-basic.stats(neutral.structure_KO,diploid=TRUE,digits=5)
+basic.stats_KO.neutral
+
+basic.stats_NA.neutral <-basic.stats(neutral.structure_NA,diploid=TRUE,digits=5)
+basic.stats_NA.neutral
+
+dos.data_SW.neutral<- fstat2dos(neutral.structure_SW) 
+dos.data_SW.neutral<-dos.data_SW.neutral[1:17,]
+
+dos.data_BU.neutral<- fstat2dos(neutral.structure_BU) 
+dos.data_BU.neutral<-dos.data_BU.neutral[1:14,]
+
+dos.data_KA.neutral<- fstat2dos(neutral.structure_KA) 
+dos.data_KA.neutral<-dos.data_KA.neutral[1:16,]
+
+dos.data_KO.neutral<- fstat2dos(neutral.structure_KO) 
+dos.data_KO.neutral<-dos.data_KO.neutral[1:17,]
+
+dos.data_NA.neutral<- fstat2dos(neutral.structure_NA) 
+dos.data_NA.neutral<-dos.data_NA.neutral[1:8,]
+
+TajimaD.dosage(dos.data_SW.neutral)
+
+std(dos.data_SW.neutral)
+
+
+TajimaD.dosage(dos.data_BU.neutral)
+
+std(dos.data_BU.neutral)
+
+
+TajimaD.dosage(dos.data_KA.neutral)
+
+std(dos.data_KA.neutral)
+
+
+TajimaD.dosage(dos.data_KO.neutral)
+
+std(dos.data_KO.neutral)
+
+
+TajimaD.dosage(dos.data_NA.neutral)
+
+std(dos.data_NA.neutral)
+
+#OUTLIER
+basic.stats.data.outlier <-basic.stats(outlier.structure,diploid=TRUE,digits=4)
+basic.stats.data.outlier
+
+#Estimates mean observed heterozygosities
+Ho(outlier.structure)
+
+Ho.outlier<-basic.stats.data.outlier[["Ho"]]
+
+Ho_SW.outlier<-Ho.outlier[,3,drop=FALSE]
+Ho_BU.outlier<-Ho.outlier[,2,drop=FALSE]
+Ho_KA.outlier<-Ho.outlier[,1,drop=FALSE]
+Ho_KO.outlier<-Ho.outlier[,4,drop=FALSE]
+Ho_NA.outlier<-Ho.outlier[,5,drop=FALSE]
+
+std(Ho_SW.outlier) 
+std(Ho_BU.outlier)
+std(Ho_KA.outlier) 
+std(Ho_KO.outlier) 
+std(Ho_NA.outlier) 
+
+#mean gene diversities within population Hs
+Hs(outlier.structure)
+
+Hs.outlier<-basic.stats.data.outlier[["Hs"]]
+
+Hs_SW.outlier<-Hs.outlier[,3,drop=FALSE]
+Hs_BU.outlier<-Hs.outlier[,2,drop=FALSE]
+Hs_KA.outlier<-Hs.outlier[,1,drop=FALSE]
+Hs_KO.outlier<-Hs.outlier[,4,drop=FALSE]
+Hs_NA.outlier<-Hs.outlier[,5,drop=FALSE]
+
+std(Hs_SW.outlier)
+std(Hs_BU.outlier) 
+std(Hs_KA.outlier)
+std(Hs_KO.outlier)
+std(Hs_NA.outlier) 
+
+Fis.outlier<-basic.stats.data.outlier[["Fis"]]
+
+Fis_SW.outlier<-Fis.outlier[,3,drop=FALSE]
+Fis_BU.outlier<-Fis.outlier[,2,drop=FALSE]
+Fis_KA.outlier<-Fis.outlier[,1,drop=FALSE]
+Fis_KO.outlier<-Fis.outlier[,4,drop=FALSE]
+Fis_NA.outlier<-Fis.outlier[,5,drop=FALSE]
+
+outlier.structure_SW<-
+  popsub(
+    outlier.structure,
+    sublist = "SW",
+    exclude = "NULL",
+    blacklist = NULL,
+    mat = NULL,
+    drop = TRUE
+  )
+
+outlier.structure_BU<-
+  popsub(
+    outlier.structure,
+    sublist = "BU",
+    exclude = "NULL",
+    blacklist = NULL,
+    mat = NULL,
+    drop = TRUE
+  )
+
+outlier.structure_KA<-
+  popsub(
+    outlier.structure,
+    sublist = "KA",
+    exclude = "NULL",
+    blacklist = NULL,
+    mat = NULL,
+    drop = TRUE
+  )
+
+outlier.structure_KO<-
+  popsub(
+    outlier.structure,
+    sublist = "KO",
+    exclude = "NULL",
+    blacklist = NULL,
+    mat = NULL,
+    drop = TRUE
+  )
+
+outlier.structure_NA<-
+  popsub(
+    outlier.structure,
+    sublist = "NA",
+    exclude = "NULL",
+    blacklist = NULL,
+    mat = NULL,
+    drop = TRUE
+  )
+
+boot.ppfis(outlier.structure_SW)
+
+#SE = (upper limit – lower limit) / 3.92
+SE_SW.outlier<-(0.8817-0.6328)/3.92
+SE_SW.outlier 
+
+boot.ppfis(outlier.structure_BU)
+
+SE_BU.outlier<-(0.9335-0.6739)/3.92
+SE_BU.outlier 
+
+boot.ppfis(outlier.structure_KA)
+
+SE_KA.outlier<-(0.4464-0.2638)/3.92
+SE_KA.outlier 
+
+boot.ppfis(outlier.structure_KO)
+
+SE_KO.outlier<-(0.8781-0.4765)/3.92
+SE_KO.outlier 
+
+boot.ppfis(outlier.structure_NA)
+
+SE_NA.outlier<-(0.6289-0.2307)/3.92
+SE_NA.outlier 
+
+basic.stats_SW.outlier <-basic.stats(outlier.structure_SW,diploid=TRUE,digits=5)
+basic.stats_SW.outlier
+
+basic.stats_BU.outlier <-basic.stats(outlier.structure_BU,diploid=TRUE,digits=5)
+basic.stats_BU.outlier
+
+basic.stats_KA.outlier <-basic.stats(outlier.structure_KA,diploid=TRUE,digits=5)
+basic.stats_KA.outlier
+
+basic.stats_KO.outlier <-basic.stats(outlier.structure_KO,diploid=TRUE,digits=5)
+basic.stats_KO.outlier
+
+basic.stats_NA.outlier <-basic.stats(outlier.structure_NA,diploid=TRUE,digits=5)
+basic.stats_NA.outlier
+
+dos.data_SW.outlier<- fstat2dos(outlier.structure_SW) 
+dos.data_SW.outlier<-dos.data_SW.outlier[1:17,]
+
+dos.data_BU.outlier<- fstat2dos(outlier.structure_BU) 
+dos.data_BU.outlier<-dos.data_BU.outlier[1:14,]
+
+dos.data_KA.outlier<- fstat2dos(outlier.structure_KA) 
+dos.data_KA.outlier<-dos.data_KA.outlier[1:16,]
+
+dos.data_KO.outlier<- fstat2dos(outlier.structure_KO) 
+dos.data_KO.outlier<-dos.data_KO.outlier[1:17,]
+
+dos.data_NA.outlier<- fstat2dos(outlier.structure_NA) 
+dos.data_NA.outlier<-dos.data_NA.outlier[1:8,]
+
+TajimaD.dosage(dos.data_SW.outlier)
+
+std(dos.data_SW.outlier)
+
+
+TajimaD.dosage(dos.data_BU.outlier)
+
+std(dos.data_BU.outlier)
+
+
+TajimaD.dosage(dos.data_KA.outlier)
+
+std(dos.data_KA.outlier)
+
+
+TajimaD.dosage(dos.data_KO.outlier)
+
+std(dos.data_KO.outlier)
+
+
+TajimaD.dosage(dos.data_NA.outlier)
+
+std(dos.data_NA.outlier)
+
+#FST with StAMPP
+#FULL
+populations.structure.gl<-gi2gl(populations.structure)
+stamppFst_values <- stamppFst(populations.structure.gl, nboots = 100, percent = 95, nclusters = 1)
+stamppFst_values
+
+?stamppFst
+
+View(stamppFst_values)
+View(populations.structure)
+
+Fsts<-stamppFst_values$Fsts
+View(Fsts)
+
+Fis_SW<-Fis[,3,drop=FALSE]
+Fis_BU<-Fis[,2,drop=FALSE]
+Fis_KA<-Fis[,1,drop=FALSE]
+Fis_KO<-Fis[,4,drop=FALSE]
+Fis_NA<-Fis[,5,drop=FALSE]
+
+shapiro.test(Fis_SW) 
+shapiro.test(Fis_BU)
+shapiro.test(Fis_KA) 
+shapiro.test(Fis_KO)
+shapiro.test(Fis_NA)
+
+wilcox.test(Fis_SW, 0)
+wilcox.test(Fis_BU, 0)
+
+wilcox.test(Fis_SW, Fis_BU) 
+wilcox.test(Fis_SW, Fis_KA) 
+wilcox.test(Fis_SW, Fis_KO) 
+wilcox.test(Fis_SW, Fis_NA) 
+wilcox.test(Fis_BU, Fis_KA) 
+wilcox.test(Fis_BU, Fis_KO)
+wilcox.test(Fis_BU, Fis_NA) 
+wilcox.test(Fis_KA, Fis_KO) 
+wilcox.test(Fis_KA, Fis_NA) 
+wilcox.test(Fis_KO, Fis_NA) 
+
+#NEUTRAL FST
+neutral.structure.gl<-gi2gl(neutral.structure)
+stamppFst_values.neutral <- stamppFst(neutral.structure.gl, nboots = 100, percent = 95, nclusters = 1)
+stamppFst_values.neutral
+
+View(stamppFst_values.neutral)
+
+#OUTLIER FST
+outlier.structure.gl<-gi2gl(outlier.structure)
+stamppFst_values.outlier <- stamppFst(outlier.structure.gl, nboots = 100, percent = 95, nclusters = 1)
+stamppFst_values.outlier
+
+#Private alleles 
+private_alleles(
+  poppr_geneclone,
+  form = alleles ~ .,
+  report = "table",
+  level = "population",
+  count.alleles = TRUE,
+  drop = FALSE
+)
